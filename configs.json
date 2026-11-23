@@ -1,0 +1,11 @@
+{
+	"before": { "backend": "vulkan", "args": ["-c", "16384", "-ngl", "99", "--jinja"] },
+	"vulkan": { "backend": "vulkan", "args": ["-c", "16384", "-np", "1", "-ngl", "99", "--jinja", "-lm", "none", "-fa", "auto", "-bs", "--samplers", "penalties;top_k;temperature", "-cram", "256"] },
+	"final": { "backend": "cuda", "args": ["-c", "16384", "-np", "1", "-ngl", "99", "--jinja", "-lm", "none", "-fa", "auto", "-bs", "--samplers", "penalties;top_k;temperature", "-cram", "256"] },
+	"cpu": { "backend": "cpu", "quick": true, "args": ["-c", "16384", "-np", "1", "-ngl", "0", "--jinja", "-lm", "none", "--samplers", "penalties;top_k;temperature", "-cram", "256"] },
+	"no-gpu-sampling": { "backend": "cuda", "args": ["-c", "16384", "-np", "1", "-ngl", "99", "--jinja", "-lm", "none", "-fa", "auto", "-cram", "256"] },
+	"kv-q8": { "backend": "cuda", "args": ["-c", "16384", "-np", "1", "-ngl", "99", "--jinja", "-lm", "none", "-fa", "on", "-bs", "--samplers", "penalties;top_k;temperature", "-ctk", "q8_0", "-ctv", "q8_0", "-cram", "256"] },
+	"ngram": { "backend": "cuda", "args": ["-c", "16384", "-np", "1", "-ngl", "99", "--jinja", "-lm", "none", "-fa", "auto", "--spec-type", "ngram-cache"] },
+	"small-batch": { "backend": "cuda", "args": ["-c", "16384", "-np", "1", "-ngl", "99", "--jinja", "-lm", "none", "-fa", "auto", "-bs", "--samplers", "penalties;top_k;temperature", "-cram", "256", "-ub", "128", "-b", "128"] },
+	"high-priority": { "backend": "cuda", "args": ["-c", "16384", "-np", "1", "-ngl", "99", "--jinja", "-lm", "none", "-fa", "auto", "-bs", "--samplers", "penalties;top_k;temperature", "-cram", "256", "--prio", "2"] }
+}
