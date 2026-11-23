@@ -28,6 +28,26 @@ RTX 4060 (8 GB), Ryzen 7 5800X, 32 GB RAM, Windows 11, llama.cpp b12633. Tokens 
 - **CPU only:** the Q4_0 file generates 2.1x faster than Q4_K_M under the same load.
 - **Vulkan:** no faster under load (about 45 tok/s either way), but RAM falls from 1,457 MB to about 400 MB.
 
+## Which 4-bit file
+
+I made my own builds from Liquid's BF16 file with an importance matrix (`llama-imatrix` on wikitext-2's training text) and scored each against BF16 on 30 chunks of wikitext-2's test text with `llama-perplexity --kl-divergence`. Lower KL divergence and a higher same-top-token rate mean the build answers more like the full model.
+
+| Build | Size | KL divergence | Same top token | Perplexity (BF16: 19.85) |
+|---|---|---|---|---|
+| Q4_K_M, imatrix (mine) | 1,049 MB | 0.079 | 86.9% | 20.54 |
+| IQ4_XS, imatrix (mine) | 957 MB | 0.112 | 84.0% | 20.97 |
+| QAD-Q4_0 (Liquid's) | 1,001 MB | 0.166 | 80.6% | 22.89 |
+| Q3_K_M, imatrix | 873 MB | 0.278 | 75.1% | 23.33 |
+| IQ3_XXS, imatrix | 715 MB | 0.423 | 69.0% | 24.36 |
+| IQ2_M, imatrix | 640 MB | 0.677 | 62.4% | 30.38 |
+
+IQ4_XS is 44 MB smaller than QAD-Q4_0 and closer to BF16. `llama-bench` put it at 107 to 111 tok/s against 99 to 103 for Q4_0, but through llama-server the two traded places run to run (69 against 77 tok/s on average), so I kept Liquid's file, which anyone can download. Below 4 bits the quality drops faster than the memory does: the embeddings of a 65k-token vocabulary are a large share of a 1.7B model. To make the IQ4_XS build yourself:
+
+```sh
+llama-imatrix -m LFM3-1.7B-BF16.gguf -f wiki.train.raw -o imatrix.gguf -c 512 --chunks 60
+llama-quantize --imatrix imatrix.gguf LFM3-1.7B-BF16.gguf LFM3-1.7B-IQ4_XS.gguf IQ4_XS
+```
+
 ## What each flag does here
 
 | Flag | Why | Measured |
@@ -47,6 +67,7 @@ RTX 4060 (8 GB), Ryzen 7 5800X, 32 GB RAM, Windows 11, llama.cpp b12633. Tokens 
 |---|---|
 | Quantized KV cache (`-ctk q8_0 -ctv q8_0`) | 20 to 25% slower to save about 48 MB |
 | n-gram speculation (`ngram-cache`, `ngram-mod`) | no gain |
+| DSpark speculative decoding ([rasyosef/LFM3-1.7B-DSpark-GGUF](https://huggingface.co/rasyosef/LFM3-1.7B-DSpark-GGUF), `--spec-type draft-dspark`) | 36 to 38 tok/s against 102, and 950 MB more video memory |
 | Smaller batches (`-ub 128`) | 57 MB less video memory, slower on long prompts |
 | No pinned memory (`GGML_CUDA_NO_PINNED=1`) | no change |
 | High priority (`--prio 2`) | 5% faster, but its busy-waiting threads slow the rest of the PC |
